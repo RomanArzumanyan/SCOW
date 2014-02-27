@@ -1080,7 +1080,7 @@ static scow_Mem_Object* Buffer_Make_Sub_Buffer(scow_Mem_Object *self,
 
     if (self->host_ptr)
     {
-        child->host_ptr = self->host_ptr + child->origin;
+        child->host_ptr = (unsigned char*)self->host_ptr + child->origin;
     }
 
     return child;
@@ -1210,7 +1210,7 @@ scow_Mem_Object* Make_Image(scow_Steel_Thread *parent_thread,
     self->Get_Row_Pitch = Image_Get_Row_Pitch;
     self->Make_Child = NULL;
 
-    self->cl_mem_object = clCreateImage2D(self->parent_thread->context,
+	self->cl_mem_object = clCreateImage2D(self->parent_thread->context,
             mem_flags, image_format, self->width, self->height, self->row_pitch,
             host_ptr, &ret);
 

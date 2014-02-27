@@ -239,7 +239,7 @@ static ret_code Platform_Info_Print(const scow_Platform_Info* self,
 static const char* Platform_Info_Get_Parameter(const scow_Platform_Info* self,
         PLATFORM_INFO_PARAM wanted_parameter)
 {
-    char* ret;
+    char* ret = NULL;
 
     OCL_CHECK_EXISTENCE(self, NULL);
 

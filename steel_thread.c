@@ -223,11 +223,21 @@ scow_Steel_Thread* Make_Steel_Thread(void)
     self->Wait_For_Commands = Steel_Thread_Wait_For_Cmd;
     self->Wait_For_Data = Steel_Thread_Wait_For_Data;
 
-    const size_t params_len = strlen(init_params);
+#if 0
+	const size_t params_len = strlen(init_params);
     (params_len >= CL_BUILD_PARAMS_STRING_SIZE) ?
-            (strncpy(self->init_params, init_params,
-                    CL_BUILD_PARAMS_STRING_SIZE - 1)) :
-            (strncpy(self->init_params, init_params, params_len));
+            (strncpy_s(
+				self->init_params, 
+				CL_BUILD_PARAMS_STRING_SIZE - 1, 
+				init_params,
+				CL_BUILD_PARAMS_STRING_SIZE - 1)) :
+
+			(strncpy_s(
+				self->init_params, 
+				params_len, 
+				init_params,
+				params_len));
+#endif
 
     self->platforms = Make_Platforms(self, device_type);
 
