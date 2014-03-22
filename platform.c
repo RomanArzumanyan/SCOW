@@ -15,11 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. */
 
-#include "steel_thread.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "platform.h"
+#include "error.h"
 
 /* \cond PRIVATE */
 static size_t Get_Parameter_Ret_String_Size(scow_Platform_Info* self,
@@ -316,21 +317,6 @@ scow_Platform_Info* Make_Platform_Info(scow_Platform* parent_platform)
  *
  */
 
-static ret_code Get_Platforms_Num(scow_Steel_Thread* parent_thread)
-{
-    cl_int ret = CL_SUCCESS;
-
-    ret = clGetPlatformIDs(0, NULL, &parent_thread->num_platforms);
-
-    if (ret != CL_SUCCESS)
-    {
-        parent_thread->num_platforms = 0;
-        return CANT_FIND_PLATFORM;
-    }
-
-    return ret;
-}
-
 /**
  * \related cl_Platform
  *
@@ -344,122 +330,16 @@ static ret_code Get_Platforms_Num(scow_Steel_Thread* parent_thread)
  */
 static ret_code Platform_Destroy(scow_Platform* self)
 {
-    scow_Platform* temp;
-
     OCL_CHECK_EXISTENCE(self, CL_SUCCESS);
 
-    // Go to the start of the list
-    self = self->To_First_Platform(self);
-
-    // Now delete elements of list
-    while (self)
-    {
-        temp = self->next_platform;
-
-        // First, delete all initialized OpenCL Devices
-        if (self->devices)
-        {
-            self->devices->Destroy(self->devices);
-        }
-
-        // Then destroy information about platform
-        if (self->info)
-        {
-            self->info->Destroy(self->info);
-        }
-
-        // Destroy error structure
-        self->error->Destroy(self->error);
-
-        // And last, free allocated memory
-        free(self);
-
-        self = temp;
-    }
+    self->error->Destroy(self->error);
+    self->info->Destroy(self->info);
+    free(self);
 
     return CL_SUCCESS;
 }
 
-/**
- * \related cl_Platform
- *
- * This function returns pointer to first OpenCL platform in the list, to which
- * OpenCL platform, definde by pointer 'self' belongs
- *
- * @param[in] self pointer to structure of type 'cl_Platform', in which
- * function pointer 'To_First_Platform' is defined to point on this function
-
- * @return pointer to first OpenCL platform in case of success, VOID_PLATFORM_PTR
- * otherwise.
- */
-static scow_Platform* Platform_To_First_Platform(scow_Platform* self)
-{
-    OCL_CHECK_EXISTENCE(self, VOID_PLATFORM_PTR);
-
-    while (self->prev_platform)
-    {
-        self = self->prev_platform;
-    }
-
-    return self;
-}
-
-/**
- * \related cl_Platform
- *
- * This function returns pointer to last OpenCL platform in the list, to which
- * OpenCL platform, definde by pointer 'self' belongs
- *
- * @param[in] self pointer to structure of type 'cl_Platform', in which
- * function pointer 'To_Last_Platform' is defined to point on this function
-
- * @return pointer to last OpenCL platform in case of success, VOID_PLATFORM_PTR
- * otherwise.
- */
-static scow_Platform* Platform_To_Last_Platform(scow_Platform* self)
-{
-    OCL_CHECK_EXISTENCE(self, VOID_PLATFORM_PTR);
-
-    while (self->next_platform)
-    {
-        self = self->next_platform;
-    }
-
-    return self;
-}
-
-/**
- * \related cl_Platform
- *
- * This function makes OpenCL platform, defined by pointer 'self' default for
- * OpenCL Steel Thread, defines by field 'parent_thread' of struct 'self'.
- * This function is thread-safe.
- *
- * @param[in] self pointer to structure of type 'cl_Platform', in which
- * function pointer 'To_Last_Platform' is defined to point on this function
-
- * @return CL_SUCCESS in case of success , error code of type 'ret_code'
- * otherwise.
- *
- * @see cl_err_codes.h for details
- * @see description of structure 'cl_Error_t' for details about error handling
- * @see description of structure 'cl_Steel_Thread_t' for details about parent
- * OpenCL Steel Thread.
- */
-static ret_code Platform_Make_Default(scow_Platform* self)
-{
-    OCL_CHECK_EXISTENCE(self, INVALID_BUFFER_GIVEN);
-    self->parent_thread->default_platform = self;
-
-    return CL_SUCCESS;
-}
-
-/* \cond PRIVATE */
-static scow_Platform* Make_List_Element(scow_Steel_Thread *parent_thread,
-        PLATFORM_CREATION_MODE platform_creation_mode,
-        DEVICE_CREATION_MODE device_creation_type,
-        cl_device_type wanted_device_type, const cl_platform_id given_platform,
-        const unsigned int platform_number)
+static scow_Platform* Make_Platform(cl_platform_id given_platform)
 {
     scow_Platform* self;
 
@@ -467,118 +347,12 @@ static scow_Platform* Make_List_Element(scow_Steel_Thread *parent_thread,
     OCL_CHECK_EXISTENCE(self, VOID_PLATFORM_PTR);
 
     self->Destroy = Platform_Destroy;
-    self->Make_Default = Platform_Make_Default;
-    self->To_First_Platform = Platform_To_First_Platform;
-    self->To_Last_Platform = Platform_To_Last_Platform;
-
     self->platform = given_platform;
-    self->parent_thread = parent_thread;
     self->error = Make_Error();
+    self->info = Make_Platform_Info(self);
 
-    /* Detect all available OpenCL Devices of desired type & initialize them.
-     * Devices will be available in double-linked list. */
-    self->devices = Make_Devices(self, device_creation_type,
-            wanted_device_type);
-
-    if (self->devices == VOID_DEVICE_PTR)
-    {
-        // No OpenCL Device(s) found isn't an error
-        if (self->error->Get_Last_Code(self->error) != CANT_FIND_DEVICE)
-        {
-            self->Destroy(self);
-            return VOID_PLATFORM_PTR;
-        }
-    }
-
-    if (platform_creation_mode != PLATFORM_CREATE_QUICK)
-    {
-        // If we arn't in hurry, collect information about platform
-        self->info = Make_Platform_Info(self);
-        OCL_CHECK_EXISTENCE_AND_DO(self->info, self->Destroy(self),
+    OCL_CHECK_EXISTENCE_AND_DO(self->info, self->Destroy(self),
                 VOID_PLATFORM_PTR);
-    }
 
     return self;
-}
-/* \endcond */
-
-/**
- * \related cl_Platform
- *
- * This function detects all available OpenCL platforms, allocates memory for
- * list of structures of type 'cl_Platform', set function pointers, structure
- * fields & returns pointer to first structure in the list in case of success.
- * List of platforms contains all platforms found.
- *
- * @param[in,out] parent_thread pointer to parent OpenCL Steel Thread
- * @param[in] wanted_device_type type of Device we want to initialize under parent platform.
- *
- * @return pointer to created structure in case of success, \ref VOID_DEVICE_PTR
- * otherwise.
- *
- * @warning always use 'Destroy' function pointer to free memory, allocated by
- * this function.
- */
-scow_Platform* Make_Platforms(scow_Steel_Thread* parent_thread,
-        cl_device_type wanted_device_type)
-{
-    cl_int ret;
-    scow_Platform* self;
-    cl_platform_id* temp_storage;
-
-    temp_storage = (cl_platform_id*) 0x0;
-
-    // Get number of available OpenCL platforms
-    ret = Get_Platforms_Num(parent_thread);
-
-    // Create temporary storage unless we will make list of cl_Platform structs
-    temp_storage = (cl_platform_id*) calloc(parent_thread->num_platforms,
-            sizeof(cl_platform_id));
-
-    OCL_CHECK_EXISTENCE(temp_storage, VOID_PLATFORM_PTR);
-
-    // Get array of platforms into temp storage
-    ret = clGetPlatformIDs(parent_thread->num_platforms, temp_storage, NULL);
-
-    if (ret != CL_SUCCESS)
-    {
-        free(temp_storage);
-        return VOID_PLATFORM_PTR;
-    }
-
-    // Make root element separately
-    self = Make_List_Element(parent_thread, PLATFORM_CREATE_AND_GATHER_INFO,
-            DEVICE_CREATE_AND_GATHER_INFO, wanted_device_type, temp_storage[0],
-            0);
-
-    if (self == VOID_PLATFORM_PTR)
-    {
-        free(temp_storage);
-        self->Destroy(self);
-        return VOID_PLATFORM_PTR;
-    }
-
-    // Now make the whole list
-    for (int i = 1; i < parent_thread->num_platforms; i++)
-    {
-        self->next_platform = Make_List_Element(parent_thread,
-                PLATFORM_CREATE_AND_GATHER_INFO,
-                PLATFORM_CREATE_AND_GATHER_INFO, wanted_device_type,
-                temp_storage[i], i);
-
-        if (self->next_platform == VOID_PLATFORM_PTR)
-        {
-            free(temp_storage);
-            self->Destroy(self);
-            return VOID_PLATFORM_PTR;
-        }
-
-        self->next_platform->prev_platform = self;
-        self = self->next_platform;
-    }
-
-    free(temp_storage);
-
-    // Go to the start of the list
-    return self->To_First_Platform(self);
 }

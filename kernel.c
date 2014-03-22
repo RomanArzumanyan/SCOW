@@ -15,13 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. */
 
-#include "steel_thread.h"
-
-#include "kernel.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+#include "steel_thread.h"
+#include "device.h"
+#include "kernel.h"
 
 /*! \cond PRIVATE */
 static cl_double Gather_Time_uS(cl_event* event)
@@ -211,7 +212,7 @@ static ret_code Kernel_Set_ND_Sizes(scow_Kernel* self,
 
     // Check what local work group size is maximal available for kernel.
     ret = clGetKernelWorkGroupInfo(self->kernel,
-            self->parent_steel_thread->default_platform->default_device->device,
+        self->parent_steel_thread->device->device_id,
             CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t),
             &max_available_local_wg_size,
             NULL);
@@ -578,13 +579,13 @@ scow_Kernel* Make_Kernel(scow_Steel_Thread* parent_steel_thread,
         char *buffer;
 
         clGetProgramBuildInfo(self->program,
-                self->parent_steel_thread->default_platform->default_device->device,
+            self->parent_steel_thread->device->device_id,
                 CL_PROGRAM_BUILD_LOG, 0, NULL, &len);
 
         buffer = calloc(len, sizeof(char));
 
         clGetProgramBuildInfo(self->program,
-                self->parent_steel_thread->default_platform->default_device->device,
+            self->parent_steel_thread->device->device_id,
                 CL_PROGRAM_BUILD_LOG, len, buffer, NULL);
 
         error_message(buffer);

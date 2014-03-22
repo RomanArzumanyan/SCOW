@@ -22,6 +22,7 @@
 #include "platforms.h"
 #include "platform.h"
 #include "devices.h"
+#include "error.h"
 
 cl_platform_id* g_all_platforms_list = VOID_OPENCL_PLATFORM_ID_PTR;
 size_t g_num_platforms = 0;

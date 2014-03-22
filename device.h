@@ -147,17 +147,7 @@ typedef struct scow_Device
     struct scow_Platform* parent_platform;
     /*!< Parent OpenCL platform, which OpenCL Device belongs to. */
 
-    struct scow_Device *next_device,
-    /*!< Pointer to next OpenCL Device in devices list. */
-    *prev_device,
-    /*!< Pointer to previous OpenCL Device in devices list. */
-    *curr_device;
-    /*!< Pointer to current OpenCL Device in devices list. */
-
-    unsigned int number;
-    /*!< Unique number of current OpenCL Device in the list of available Devices. */
-
-    cl_device_id device;
+    cl_device_id device_id;
     /*!< OpenCL Device structure from OpenCL API. */
 
     char name[CL_DEVICE_NAME_SIZE],
@@ -229,15 +219,6 @@ typedef struct scow_Device
     /*! Points on Device_Destroy(). */
     ret_code (*Destroy)(struct scow_Device *self);
 
-    /*! Points on Device_Make_Default(). */
-    ret_code (*Make_Default)(struct scow_Device *self);
-
-    /*! Points on Device_To_Last_Device(). */
-    struct scow_Device* (*To_Last_Device)(struct scow_Device *self);
-
-    /*! Points on Device_To_First_Device(). */
-    struct scow_Device* (*To_First_Device)(struct scow_Device *self);
-
     /**@}*/
 
 } scow_Device;
@@ -257,9 +238,7 @@ typedef struct scow_Device
  * @warning always use 'Destroy' function pointer of Device Translation structure
  * to free memory, allocated by this function
  */
-scow_Device* Make_Devices(struct scow_Platform *parent_platform,
-        DEVICE_CREATION_MODE creation_type,
-        const cl_device_type wanted_device_type);
+scow_Device* Make_Device(cl_device_id given_device);
 
 #ifdef __cplusplus
 }

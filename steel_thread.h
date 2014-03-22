@@ -23,7 +23,7 @@ extern "C"
 {
 #endif
 
-#include "platform.h"
+#include "typedefs.h"
 
 /*! \def CL_BUILD_PARAMS_STRING_SIZE
  * Maximal length of string with additional program build parameters
@@ -42,6 +42,10 @@ extern "C"
  */
 #undef VOID_STEEL_THREAD_PTR
 #define VOID_STEEL_THREAD_PTR       ((scow_Steel_Thread*)0x0)
+
+struct scow_Error;
+struct scow_Device;
+struct scow_Platform;
 
 /*! \struct scow_Steel_Thread
  *
@@ -66,21 +70,14 @@ extern "C"
  */
 typedef struct scow_Steel_Thread
 {
-    scow_Error* error;
+    struct scow_Error* error;
     /*!< Structure for errors handling. */
 
-    cl_uint num_platforms;
-    /*!< Number of available OpenCL platforms. */
+    struct scow_Device *device;
+    /*!< OpenCL Device, around which Steel Thread is wrapped. */
 
-    scow_Platform* platforms;
-    /*!< List of available OpenCL platforms. */
-
-    scow_Platform* default_platform;
-    /*!< Default OpenCL platform. Some actions needs OpenCL Device to be
-     * provided explicitly. In order to simplify this process, Steel Thread
-     * has one platform as default. Default platform, correspondingly, has
-     * one default OpenCL Device, which will be provided unless other Device
-     *  is provided explicitly. */
+    struct scow_Platform* platform;
+    /*!< OpenCL platform, to which Device belongs to. */
 
     char init_params[CL_BUILD_PARAMS_STRING_SIZE];
     /*!< Additional built parameters, that will be passed at OpenCL program build
@@ -111,10 +108,6 @@ typedef struct scow_Steel_Thread
     ret_code (*Destroy)(struct scow_Steel_Thread *self);
     /*!< Points on Steel_Thread_Destroy(). */
 
-    ret_code (*Save_Bin_Program_To_File)(struct scow_Steel_Thread *self,
-            const char *filename);
-    /*!< Points on Steel_Thread_Save_Bin_Program_To_File(). */
-
     ret_code (*Wait_For_Commands)(struct scow_Steel_Thread *self);
     /*!< Points on Steel_Thread_Wait_For_Commands(). */
 
@@ -128,10 +121,7 @@ typedef struct scow_Steel_Thread
  * This function allocates memory for structure, initialize OpenCL & set
  * function pointers
  *
- * @param[in] device_type type of OpenCL device(s) we want to initialize
- * @param[in] init_params Additional parameters, that will be passed at OpenCL
- * program building stage for all objects, that will have this Steel Thread as
- * parent one.
+ * @param[in] given_device OpenCL device, around which Steel Thread will be wrapped.
  *
  * @return pointer to allocated structure in case of success,
  * \ref VOID_STEEL_THREAD_PTR otherwise
@@ -139,7 +129,7 @@ typedef struct scow_Steel_Thread
  * @warning always use 'Destroy' function pointer to free memory, allocated by
  * this function.
  */
-scow_Steel_Thread* Make_Steel_Thread(void);
+scow_Steel_Thread* Make_Steel_Thread(cl_device_id given_device);
 
 #ifdef __cplusplus
 }

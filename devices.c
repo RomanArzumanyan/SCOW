@@ -15,6 +15,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License. */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "err_codes.h"
 #include "error.h"
 #include "platforms.h"
@@ -223,20 +226,20 @@ cl_device_id Pick_Device_By_Name(const char* const device_name)
 
 	for (size_t i = 0; i < devices_types; i++){
 		OCL_CHECK_EXISTENCE(devices, NULL);
-		for (size_t platform = 0; platform < num_devices; platform++){
-			OCL_CHECK_EXISTENCE(devices[platform], NULL);
+		for (size_t device = 0; device < num_devices; device++){
+			OCL_CHECK_EXISTENCE(devices[device], NULL);
 
-			// First we get platform name
+			// First we get device name
 			size_t name_len;
 
-			ret_code ret = clGetPlatformInfo(devices[platform],
-				CL_PLATFORM_NAME, NULL, NULL, &name_len);
+			ret_code ret = clGetDeviceInfo(devices[device],
+				CL_DEVICE_NAME, NULL, NULL, &name_len);
 			OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
 
 			char *name = (char*)calloc(name_len, sizeof(*name));
 
-			ret = clGetPlatformInfo(devices[platform],
-				CL_PLATFORM_NAME, name_len, name, NULL);
+            ret = clGetDeviceInfo(devices[device],
+                CL_DEVICE_NAME, name_len, name, NULL);
 			if (ret != CL_SUCCESS){
 				free(name);
 				OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
@@ -245,7 +248,7 @@ cl_device_id Pick_Device_By_Name(const char* const device_name)
 			// Then check it against given
 			if (strstr(name, device_name)){
 				free(name);
-				return devices[platform];
+				return devices[device];
 			}
 
 			free(name);

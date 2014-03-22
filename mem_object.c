@@ -1149,6 +1149,7 @@ scow_Mem_Object* Make_Buffer(scow_Steel_Thread *parent_thread,
     return self;
 }
 
+#ifdef CL_USE_DEPRECATED_OPENCL_1_1_APIS
 /**
  * \related cl_Mem_Object_t
  *
@@ -1210,6 +1211,7 @@ scow_Mem_Object* Make_Image(scow_Steel_Thread *parent_thread,
     self->Get_Row_Pitch = Image_Get_Row_Pitch;
     self->Make_Child = NULL;
 
+
 	self->cl_mem_object = clCreateImage2D(self->parent_thread->context,
             mem_flags, image_format, self->width, self->height, self->row_pitch,
             host_ptr, &ret);
@@ -1218,4 +1220,5 @@ scow_Mem_Object* Make_Image(scow_Steel_Thread *parent_thread,
 
     return self;
 }
+#endif
 

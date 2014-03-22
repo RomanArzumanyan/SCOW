@@ -15,45 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. */
 
-#include "steel_thread.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-/*! \cond PRIVATE */
-static ret_code Set_Default_Device(scow_Steel_Thread* self)
-{
-    ret_code ret;
-
-    OCL_CHECK_EXISTENCE(self, INVALID_BUFFER_GIVEN);
-
-    while (self->platforms)
-    {
-        if (self->platforms->wanted_devices_num > 0)
-        {
-            // Make first platform with non-zero amount of OpenCL Devices default
-            ret = self->platforms->Make_Default(self->platforms);
-            OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, ret);
-
-            // Make first available OpenCL Device default
-            ret = self->platforms->devices->Make_Default(
-                    self->platforms->devices);
-            OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, ret);
-
-            break;
-        }
-        else
-        {
-            self->platforms = self->platforms->next_platform;
-        }
-    }
-
-    // Go to start of platforms list
-    self->platforms = self->platforms->To_First_Platform(self->platforms);
-
-    return ret;
-}
+#include "steel_thread.h"
+#include "error.h"
+#include "device.h"
+#include "platform.h"
 
 static ret_code Init_OpenCL(scow_Steel_Thread* self)
 {
@@ -64,26 +33,25 @@ static ret_code Init_OpenCL(scow_Steel_Thread* self)
 
     // Create context for default plarform & default device
     self->context = clCreateContext(
-    NULL, 1, &self->default_platform->default_device->device, NULL,
-    NULL, &ret);
+        NULL, 1, &self->device->device_id, NULL, NULL, &ret);
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_CREATE_CONTEXT);
 
     // Create command queue for kernel execution
     self->q_cmd = clCreateCommandQueue(self->context,
-            self->default_platform->default_device->device, q_props, &ret);
+        self->device->device_id, q_props, &ret);
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_CREATE_CMD_QUEUE);
 
     // Create command queue for data transmission
     self->q_data_htod = clCreateCommandQueue(self->context,
-            self->default_platform->default_device->device, q_props, &ret);
+        self->device->device_id, q_props, &ret);
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_CREATE_CMD_QUEUE);
 
     self->q_data_dtoh = clCreateCommandQueue(self->context,
-            self->default_platform->default_device->device, q_props, &ret);
+        self->device->device_id, q_props, &ret);
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_CREATE_CMD_QUEUE);
 
     self->q_data_dtod = clCreateCommandQueue(self->context,
-            self->default_platform->default_device->device, q_props, &ret);
+        self->device->device_id, q_props, &ret);
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_CREATE_CMD_QUEUE);
 
     return CL_SUCCESS;
@@ -128,9 +96,13 @@ static ret_code Steel_Thread_Destroy(scow_Steel_Thread* self)
         clReleaseContext(self->context);
     }
 
-    if (self->platforms)
+    if (self->platform)
     {
-        self->platforms->Destroy(self->platforms);
+        self->platform->Destroy(self->platform);
+    }
+
+    if (self->device){
+        self->device->Destroy(self->device);
     }
 
     self->error->Destroy(self->error);
@@ -208,7 +180,7 @@ static ret_code Steel_Thread_Wait_For_Cmd(scow_Steel_Thread* self)
  * @warning always use 'Destroy' function pointer to free memory, allocated by
  * this function.
  */
-scow_Steel_Thread* Make_Steel_Thread(void)
+scow_Steel_Thread* Make_Steel_Thread(cl_device_id given_device)
 {
     int ret;
     const cl_device_type device_type = CL_DEVICE_TYPE_GPU;
@@ -219,37 +191,23 @@ scow_Steel_Thread* Make_Steel_Thread(void)
 
     self->error = Make_Error();
     self->Destroy = Steel_Thread_Destroy;
-    self->Save_Bin_Program_To_File = NULL;
     self->Wait_For_Commands = Steel_Thread_Wait_For_Cmd;
     self->Wait_For_Data = Steel_Thread_Wait_For_Data;
 
-#if 0
-	const size_t params_len = strlen(init_params);
-    (params_len >= CL_BUILD_PARAMS_STRING_SIZE) ?
-            (strncpy_s(
-				self->init_params, 
-				CL_BUILD_PARAMS_STRING_SIZE - 1, 
-				init_params,
-				CL_BUILD_PARAMS_STRING_SIZE - 1)) :
+    // Get OpenCL Platform, to which OpenCL Device belongs to;
+    cl_platform_id platform;
+    ret = clGetDeviceInfo(given_device, CL_DEVICE_PLATFORM, sizeof(platform),
+        &platform, NULL);
+    OCL_DIE_ON_ERROR(ret, CL_SUCCESS, self->Destroy(self), VOID_STEEL_THREAD_PTR);
 
-			(strncpy_s(
-				self->init_params, 
-				params_len, 
-				init_params,
-				params_len));
-#endif
+    // And initialize SCOW wrappers around then
+    self->device = Make_Device(given_device);
+    OCL_CHECK_EXISTENCE_AND_DO(self->device, self->Destroy(self),
+        VOID_STEEL_THREAD_PTR);
 
-    self->platforms = Make_Platforms(self, device_type);
-
-    if (self->platforms == VOID_PLATFORM_PTR)
-    {
-        self->Destroy(self);
-        return VOID_STEEL_THREAD_PTR;
-    }
-
-    // Make first available Device on first available Platform defaults
-    ret = Set_Default_Device(self);
-    OCL_DIE_ON_ERROR(ret, CL_SUCCESS, self->Destroy(self), NULL);
+    self->platform = Make_Platform(platform);
+    OCL_CHECK_EXISTENCE_AND_DO(self->platform, self->Destroy(self),
+        VOID_STEEL_THREAD_PTR);
 
     // Init OpenCL at last
     ret = Init_OpenCL(self);
