@@ -144,9 +144,6 @@ typedef struct scow_Device
     scow_Error* error;
     /*!< Structure for errors handling. */
 
-    struct scow_Platform* parent_platform;
-    /*!< Parent OpenCL platform, which OpenCL Device belongs to. */
-
     cl_device_id device_id;
     /*!< OpenCL Device structure from OpenCL API. */
 
