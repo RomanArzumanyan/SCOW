@@ -16,10 +16,12 @@
 * limitations under the License. */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "err_codes.h"
 #include "platforms.h"
 #include "platform.h"
+#include "devices.h"
 
 cl_platform_id* g_all_platforms_list = VOID_OPENCL_PLATFORM_ID_PTR;
 size_t g_num_platforms = 0;
@@ -63,4 +65,125 @@ ret_code Erase_Platforms_List(void)
 	}
 
 	return CL_SUCCESS;
+}
+
+cl_platform_id Pick_Platform_By_Name(const char* platform_name)
+{
+	OCL_CHECK_EXISTENCE(g_all_platforms_list, NULL);
+	for (size_t platform = 0; platform < g_num_platforms; platform++){
+		OCL_CHECK_EXISTENCE(g_all_platforms_list[platform], NULL);
+
+		// First we get platform name
+		size_t name_len;
+
+		ret_code ret = clGetPlatformInfo(g_all_platforms_list[platform],
+			CL_PLATFORM_NAME, NULL, NULL, &name_len);
+		OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
+
+		char *name = (char*)calloc(name_len, sizeof(*name));
+
+		ret = clGetPlatformInfo(g_all_platforms_list[platform],
+			CL_PLATFORM_NAME, name_len, name, NULL);
+		if (ret != CL_SUCCESS){
+			free(name);
+			OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
+		}
+
+		// Then check it against given
+		if (strstr(name, platform_name)){
+			free(name);
+			return g_all_platforms_list[platform];
+		}
+
+		free(name);
+	}
+
+	// If not found, return NULL
+	return NULL;
+}
+
+cl_platform_id Pick_First_Platform(void)
+{
+	return g_all_platforms_list ? NULL : g_all_platforms_list[0];
+}
+
+cl_platform_id Pick_Last_Platform(void)
+{
+	return g_all_platforms_list ? NULL : g_all_platforms_list[g_num_platforms];
+}
+
+cl_platform_id Pick_Next_Platform(cl_platform_id current_platform)
+{
+	// Current platform is within list of OpenCL Platforms & it's not last
+	cl_bool good_platform =
+		(&current_platform >= g_all_platforms_list) &&
+		(&current_platform <  g_all_platforms_list + g_num_platforms - 1);
+
+	return good_platform ? *(&current_platform + 1) : NULL;
+}
+
+cl_platform_id Pick_Prev_Platform(cl_platform_id current_platform)
+{
+	// Current platform is within list of OpenCL Platforms & it's not first
+	cl_bool good_platform =
+		(&current_platform > g_all_platforms_list) &&
+		(&current_platform < g_all_platforms_list + g_num_platforms);
+
+	return good_platform ? *(&current_platform - 1) : NULL;
+}
+
+cl_platform_id Pick_Platform_By_Device_Type(const cl_device_type device_type)
+{
+	cl_device_id *dev_list;
+	size_t device_num;
+
+	// Looks ugly, but MSVC can't compile it other way
+	switch (device_type){
+	case CL_DEVICE_TYPE_CPU:
+		// Check that there are registered OpenCL Devices of wanted type
+		OCL_CHECK_EXISTENCE(g_all_CPU_list, NULL);
+		if (g_all_CPU_num == 0){
+			return NULL;
+		}
+
+		// Check to what OpenCL Platform does registered Devices from list belongs to
+		for (size_t device = 0; device < g_all_CPU_num; device++){
+			cl_platform_id platform;
+
+			ret_code ret = clGetDeviceInfo(g_all_CPU_list[device],
+				CL_DEVICE_PLATFORM, sizeof(platform), &platform, NULL);
+			OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
+
+			return platform;
+		}
+
+		break;
+
+	case CL_DEVICE_TYPE_GPU:
+		// Check that there are registered OpenCL Devices of wanted type
+		OCL_CHECK_EXISTENCE(g_all_GPU_list, NULL);
+		if (g_all_GPU_num == 0){
+			return NULL;
+		}
+
+		// Check to what OpenCL Platform does registered Devices from list belongs to
+		for (size_t device = 0; device < g_all_GPU_num; device++){
+			cl_platform_id platform;
+
+			ret_code ret = clGetDeviceInfo(g_all_GPU_list[device],
+				CL_DEVICE_PLATFORM, sizeof(platform), &platform, NULL);
+			OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
+
+			return platform;
+		}
+
+		break;
+
+	default:
+		return NULL;
+		break;
+	}
+
+	// If not found, return NULL
+	return NULL;
 }

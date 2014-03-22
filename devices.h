@@ -58,6 +58,59 @@ ret_code Collect_Devices_List(void);
 */
 ret_code Erase_Devices_List(void);
 
+/**
+* @brief This function finds first OpenCL Device with given name within list of registered
+* devices.
+*
+* @param[in] name wanted OpenCL Device name
+*
+* @return cl_device_id of found OpenCL Device, NULL otherwise
+*/
+cl_device_id Pick_Device_By_Name(const char* const name);
+
+/**
+* @brief This function finds first OpenCL Device of given type within list of registered
+* devices.
+*
+* @param[in] device_type wanted OpenCL Device type
+*
+* @return cl_device_id of found OpenCL Device, NULL otherwise
+*/
+cl_device_id Pick_Device_By_Type(const cl_device_type device_type);
+
+/**
+* @brief This function finds OpenCL Device of given type under given platform
+*
+* @param[in] name parent_platform OpenCL Platform, under which Device should
+* be found
+* @param[in] device_type wanted OpenCL Device type
+*
+* @return cl_device_id of found OpenCL Device, NULL otherwise
+*/
+cl_device_id Pick_Device_By_Platform(
+	const cl_platform_id	parent_platform,
+	const cl_device_type	device_type);
+
+/**
+ * @brief This function returns next OpenCL Device of same type & parent OpenCL Platform
+ * in list of registered OpenCL Devices. Use it to navigate through Devices
+ *
+ * @param[in] current_device current OpenCL Device
+ *
+ * @return cl_device_id of next OpenCL Device, NULL otherwise
+ */
+cl_device_id Pick_Next_Device(const cl_device_id current_device);
+
+/**
+* @brief This function returns previous OpenCL Device of same type & parent OpenCL Platform
+* in list of registered OpenCL Devices. Use it to navigate through Devices
+*
+* @param[in] current_device current OpenCL Device
+*
+* @return cl_device_id of previous OpenCL Device, NULL otherwise
+*/
+cl_device_id Pick_Prev_Device(const cl_device_id current_device);
+
 #ifdef __cplusplus
 }
 #endif

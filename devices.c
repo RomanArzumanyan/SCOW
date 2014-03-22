@@ -78,11 +78,24 @@ static size_t Get_Num_Devices(
 	return current_platform_device_num;
 }
 
+/**
+* @brief This function get list of OpenCL Devices of wanted type under
+* given platform.
+*
+* @param[in] parent_platform OpenCL platform, under wich list of OpenCL
+* Devices of wanted type will be gathered.
+* @param[in] num_devices number of OpenCL Devices to write into list.
+* @param[in] wanted_device_type type of wanted OpenCL Device.
+*
+* @param[out] device_ids array, in which list will be written
+*
+* @return number of devices found.
+*/
 static ret_code Get_Devices(
 	cl_platform_id	*parent_platform,
-	cl_device_id	*device_ids,
+	const size_t	num_devices,
 	cl_device_type	wanted_device_type,
-	const size_t	num_devices)
+	cl_device_id	*device_ids)
 {
 	ret_code ret = clGetDeviceIDs(parent_platform, wanted_device_type,
 		num_devices, device_ids, NULL);
@@ -145,8 +158,8 @@ ret_code Collect_Devices_List(void)
 	for (size_t platform = 0; platform < g_num_platforms; platform++){
 		// Get CPUs
 		if (num_cpus[platform] != 0){
-			ret = Get_Devices(g_all_platforms_list[platform], ptr_cpu,
-				CL_DEVICE_TYPE_CPU, num_cpus[platform]);
+			ret = Get_Devices(g_all_platforms_list[platform], num_cpus[platform],
+				CL_DEVICE_TYPE_CPU, ptr_cpu);
 			ptr_cpu += num_cpus[platform];
 
 			if (ret != CL_SUCCESS){
@@ -160,8 +173,8 @@ ret_code Collect_Devices_List(void)
 
 		// Get GPUs
 		if (num_gpus[platform] != 0){
-			ret = Get_Devices(g_all_platforms_list[platform], ptr_gpu,
-				CL_DEVICE_TYPE_GPU, num_gpus[platform]);
+			ret = Get_Devices(g_all_platforms_list[platform], num_gpus[platform],
+				CL_DEVICE_TYPE_GPU, ptr_gpu);
 			ptr_gpu += num_gpus[platform];
 
 			if (ret != CL_SUCCESS){
@@ -199,4 +212,181 @@ ret_code Erase_Devices_List(void)
 	}
 
 	return CL_SUCCESS;
+}
+
+cl_device_id Pick_Device_By_Name(const char* const device_name)
+{
+	// 2 different types of OpenCL Devices are supported at the moment
+	size_t devices_types = 2;
+	cl_device_id *devices = g_all_CPU_list;
+	size_t num_devices = g_all_CPU_num;
+
+	for (size_t i = 0; i < devices_types; i++){
+		OCL_CHECK_EXISTENCE(devices, NULL);
+		for (size_t platform = 0; platform < num_devices; platform++){
+			OCL_CHECK_EXISTENCE(devices[platform], NULL);
+
+			// First we get platform name
+			size_t name_len;
+
+			ret_code ret = clGetPlatformInfo(devices[platform],
+				CL_PLATFORM_NAME, NULL, NULL, &name_len);
+			OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
+
+			char *name = (char*)calloc(name_len, sizeof(*name));
+
+			ret = clGetPlatformInfo(devices[platform],
+				CL_PLATFORM_NAME, name_len, name, NULL);
+			if (ret != CL_SUCCESS){
+				free(name);
+				OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
+			}
+
+			// Then check it against given
+			if (strstr(name, device_name)){
+				free(name);
+				return devices[platform];
+			}
+
+			free(name);
+		}
+
+		devices = g_all_GPU_list;
+		num_devices = g_all_GPU_num;
+
+	}
+
+	// If not found, return NULL
+	return NULL;
+}
+
+cl_device_id Pick_Device_By_Type(const cl_device_type device_type)
+{
+	switch (device_type){
+	case CL_DEVICE_TYPE_CPU:
+		OCL_CHECK_EXISTENCE(g_all_CPU_list, NULL);
+		return g_all_CPU_num > 0 ? g_all_CPU_list[0] : NULL;
+		break;
+
+	case CL_DEVICE_TYPE_GPU:
+		OCL_CHECK_EXISTENCE(g_all_GPU_list, NULL);
+		return g_all_GPU_num > 0 ? g_all_GPU_list[0] : NULL;
+		break;
+
+	default:
+		return NULL;
+		break;
+	}
+}
+
+cl_device_id Pick_Device_By_Platform(
+	const cl_platform_id	parent_platform,
+	const cl_device_type	device_type)
+{
+    cl_device_id *devices;
+    size_t num_devices;
+
+    switch (device_type){
+    case CL_DEVICE_TYPE_CPU:
+        devices = g_all_CPU_list;
+        num_devices = g_all_CPU_num;
+        break;
+        
+    case CL_DEVICE_TYPE_GPU:
+        devices = g_all_GPU_list;
+        num_devices = g_all_GPU_num;
+        break;
+
+    default:
+        return NULL;
+        break;
+    }
+
+    OCL_CHECK_EXISTENCE(devices, NULL);
+    if (!num_devices){
+        return NULL;
+    }
+
+    for (size_t device = 0; device < num_devices; device++){
+        cl_platform_id curr_platform;
+
+        ret_code ret = clGetDeviceInfo(devices[device],
+            CL_DEVICE_PLATFORM, sizeof(curr_platform), &curr_platform,
+            NULL);
+
+        if (curr_platform == parent_platform){
+            return devices[device];
+        }
+    }
+
+    return NULL;
+
+}
+
+cl_device_id Pick_Next_Device(const cl_device_id current_device)
+{
+    OCL_CHECK_EXISTENCE(current_device, NULL);
+
+    cl_device_type curr_device_type;
+    cl_device_id *devices;
+    size_t num_devices;
+
+    ret_code ret = clGetDeviceInfo(current_device, CL_DEVICE_TYPE,
+        sizeof(curr_device_type), &curr_device_type, NULL);
+
+    switch (curr_device_type){
+    case CL_DEVICE_TYPE_CPU:
+        devices = g_all_CPU_list;
+        num_devices = g_all_CPU_num;
+        break;
+
+    case CL_DEVICE_TYPE_GPU:
+        devices = g_all_GPU_list;
+        num_devices = g_all_GPU_num;
+        break;
+
+    default:
+        return NULL;
+        break;
+    }
+
+    // Current Device is within list of registered OpenCL Devices & is not last
+    cl_bool good_device =
+        (current_device >= devices) && (current_device < devices + num_devices - 1);
+
+    return good_device ? *(&current_device + 1) : NULL;
+}
+
+cl_device_id Pick_Prev_Device(const cl_device_id current_device)
+{
+    OCL_CHECK_EXISTENCE(current_device, NULL);
+
+    cl_device_type curr_device_type;
+    cl_device_id *devices;
+    size_t num_devices;
+
+    ret_code ret = clGetDeviceInfo(current_device, CL_DEVICE_TYPE,
+        sizeof(curr_device_type), &curr_device_type, NULL);
+
+    switch (curr_device_type){
+    case CL_DEVICE_TYPE_CPU:
+        devices = g_all_CPU_list;
+        num_devices = g_all_CPU_num;
+        break;
+
+    case CL_DEVICE_TYPE_GPU:
+        devices = g_all_GPU_list;
+        num_devices = g_all_GPU_num;
+        break;
+
+    default:
+        return NULL;
+        break;
+    }
+
+    // Current Device is within list of registered OpenCL Devices & is not first
+    cl_bool good_device =
+        (current_device > devices) && (current_device < devices + num_devices);
+
+    return good_device ? *(&current_device - 1) : NULL;
 }

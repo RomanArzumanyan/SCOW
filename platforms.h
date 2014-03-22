@@ -53,6 +53,53 @@ ret_code Collect_Platforms_List(void);
 */
 ret_code Erase_Platforms_List(void);
 
+/**
+* @brief This function finds platform with given name within list of found OpenCL platforms
+*
+* @param name name of wanted platform
+*
+* @return cl_platform_id in case of success, NULL otherwise
+*/
+cl_platform_id Pick_Platform_By_Name(const char* name);
+
+/**
+* @brief This function finds first platform within list of found OpenCL platforms
+*
+* @return cl_platform_id in case of success, NULL otherwise
+*/
+cl_platform_id Pick_First_Platform(void);
+
+/**
+* @brief This function finds last platform within list of found OpenCL platforms
+*
+* @return cl_platform_id in case of success, NULL otherwise
+*/
+cl_platform_id Pick_Last_Platform(void);
+
+/**
+* @brief This function finds next platform within list of found OpenCL platforms
+* by given current platform. Use it to traverse in platforms.
+*
+* @return cl_platform_id in case of success, NULL otherwise
+*/
+cl_platform_id Pick_Next_Platform(cl_platform_id current_platform);
+
+/**
+* @brief This function finds previous platform within list of found OpenCL platforms
+* by given current platform. Use it to traverse in platforms.
+*
+* @return cl_platform_id in case of success, NULL otherwise
+*/
+cl_platform_id Pick_Prev_Platform(cl_platform_id current_platform);
+
+/**
+* @brief This function finds platform within list of registered OpenCL platforms,
+* which contains OpenCL Device of wanted type.
+*
+* @return cl_platform_id in case of success, NULL otherwise
+*/
+cl_platform_id Pick_Platform_By_Device_Type(const cl_device_type device_type);
+
 #ifdef __cplusplus
 }
 #endif
