@@ -339,7 +339,7 @@ static ret_code Platform_Destroy(scow_Platform* self)
     return CL_SUCCESS;
 }
 
-static scow_Platform* Make_Platform(cl_platform_id given_platform)
+scow_Platform* Make_Platform(cl_platform_id given_platform)
 {
     scow_Platform* self;
 

@@ -37,7 +37,7 @@ extern size_t
 /*! \def VOID_OPENCL_DEVICE_ID_PTR
 * Void pointer to list of OpenCL Devices
 */
-#undef VOID_OPENCL_DEVICE_ID_PTR;
+#undef VOID_OPENCL_DEVICE_ID_PTR
 #define VOID_OPENCL_DEVICE_ID_PTR ((cl_device_id*)0x0)
 
 /**

@@ -31,7 +31,10 @@ ret_code Get_Num_Platforms(void)
 {
 	cl_int ret = CL_SUCCESS;
 
-	ret = clGetPlatformIDs(0, NULL, &g_num_platforms);
+	cl_uint num_platforms;
+	ret = clGetPlatformIDs(0, NULL, &num_platforms);
+
+	g_num_platforms = num_platforms;
 
 	OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, 0);
 
@@ -135,9 +138,6 @@ cl_platform_id Pick_Prev_Platform(cl_platform_id current_platform)
 
 cl_platform_id Pick_Platform_By_Device_Type(const cl_device_type device_type)
 {
-	cl_device_id *dev_list;
-	size_t device_num;
-
 	// Looks ugly, but MSVC can't compile it other way
 	switch (device_type){
 	case CL_DEVICE_TYPE_CPU:

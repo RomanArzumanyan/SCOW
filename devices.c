@@ -42,11 +42,11 @@ size_t g_all_GPU_num = 0;
 * @return number of devices found.
 */
 static size_t Get_Num_Devices(
-	cl_platform_id	*parent_platform,
+	cl_platform_id	parent_platform,
 	cl_device_type	wanted_device_type)
 {
 	ret_code ret = CL_SUCCESS;
-	size_t current_platform_device_num = 0;
+	cl_uint current_platform_device_num = 0;
 
 	// If no platforms are found at all
 	if (!parent_platform){
@@ -95,7 +95,7 @@ static size_t Get_Num_Devices(
 * @return number of devices found.
 */
 static ret_code Get_Devices(
-	cl_platform_id	*parent_platform,
+	cl_platform_id	parent_platform,
 	const size_t	num_devices,
 	cl_device_type	wanted_device_type,
 	cl_device_id	*device_ids)
@@ -204,13 +204,13 @@ ret_code Erase_Devices_List(void)
 {
 	if (g_all_CPU_list){
 		free(g_all_CPU_list);
-		cl_device_id *g_all_CPU_list = VOID_OPENCL_DEVICE_ID_PTR;
+		g_all_CPU_list = VOID_OPENCL_DEVICE_ID_PTR;
 		g_all_CPU_num = 0;
 	}
 
 	if (g_all_GPU_list){
 		free(g_all_GPU_list);
-		cl_device_id *g_all_GPU_list = VOID_OPENCL_DEVICE_ID_PTR;
+		g_all_GPU_list = VOID_OPENCL_DEVICE_ID_PTR;
 		g_all_GPU_num = 0;
 	}
 
@@ -314,8 +314,8 @@ cl_device_id Pick_Device_By_Platform(
         cl_platform_id curr_platform;
 
         ret_code ret = clGetDeviceInfo(devices[device],
-            CL_DEVICE_PLATFORM, sizeof(curr_platform), &curr_platform,
-            NULL);
+            CL_DEVICE_PLATFORM, sizeof(curr_platform), &curr_platform, NULL);
+        OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
 
         if (curr_platform == parent_platform){
             return devices[device];
@@ -336,6 +336,7 @@ cl_device_id Pick_Next_Device(const cl_device_id current_device)
 
     ret_code ret = clGetDeviceInfo(current_device, CL_DEVICE_TYPE,
         sizeof(curr_device_type), &curr_device_type, NULL);
+    OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
 
     switch (curr_device_type){
     case CL_DEVICE_TYPE_CPU:
@@ -355,7 +356,7 @@ cl_device_id Pick_Next_Device(const cl_device_id current_device)
 
     // Current Device is within list of registered OpenCL Devices & is not last
     cl_bool good_device =
-        (current_device >= devices) && (current_device < devices + num_devices - 1);
+        (&current_device >= devices) && (&current_device < devices + num_devices - 1);
 
     return good_device ? *(&current_device + 1) : NULL;
 }
@@ -370,6 +371,7 @@ cl_device_id Pick_Prev_Device(const cl_device_id current_device)
 
     ret_code ret = clGetDeviceInfo(current_device, CL_DEVICE_TYPE,
         sizeof(curr_device_type), &curr_device_type, NULL);
+    OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
 
     switch (curr_device_type){
     case CL_DEVICE_TYPE_CPU:
@@ -389,7 +391,7 @@ cl_device_id Pick_Prev_Device(const cl_device_id current_device)
 
     // Current Device is within list of registered OpenCL Devices & is not first
     cl_bool good_device =
-        (current_device > devices) && (current_device < devices + num_devices);
+        (&current_device > devices) && (&current_device < devices + num_devices);
 
     return good_device ? *(&current_device - 1) : NULL;
 }
