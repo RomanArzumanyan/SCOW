@@ -388,17 +388,15 @@ static ret_code Kernel_Launch(scow_Kernel* self, cl_command_queue* queue,
         cl_uint evt_wait_list_size, const cl_event* evt_wait_list,
         cl_event* generated_evt, TIME_STUDY_MODE time_measure_mode, ...)
 {
-    unsigned int num_kernel_args;
     va_list kernel_arguments;
     cl_int ret;
 
     OCL_CHECK_EXISTENCE(self, INVALID_BUFFER_GIVEN);
 
     // Other function arguments are kernel arguments. They are optional
-    num_kernel_args = Get_Args_Num(self);
     va_start(kernel_arguments, time_measure_mode);
 
-    for (int i = 0; i < num_kernel_args; i++)
+    for (int i = 0; i < self->num_args; i++)
     {
         scow_Kernel_Arg curr_arg = va_arg(kernel_arguments, scow_Kernel_Arg);
 
@@ -494,7 +492,7 @@ static ret_code Kernel_Check_Status(scow_Kernel* self)
  * building stage, if pre-built program isn't provided.
  *
  * @return pointer to allocated structure in case of success,
- * \ref VOID_MINIMAL_KERNEL_PTR otherwise
+ * \ref VOID_KERNEL_PTR otherwise
  *
  * @warning always use 'Destroy' function pointer to free memory, allocated by
  * this function.
@@ -507,17 +505,17 @@ scow_Kernel* Make_Kernel(scow_Steel_Thread* parent_steel_thread,
     cl_int ret;
     char* src_file;
 
-    OCL_CHECK_EXISTENCE(parent_steel_thread, VOID_MINIMAL_KERNEL_PTR);
-    OCL_CHECK_EXISTENCE(kernel_name, VOID_MINIMAL_KERNEL_PTR);
+    OCL_CHECK_EXISTENCE(parent_steel_thread, VOID_KERNEL_PTR);
+    OCL_CHECK_EXISTENCE(kernel_name, VOID_KERNEL_PTR);
 
     if (strlen(kernel_name) > OCL_KERNEL_NAME_MAX_LEN)
     {
-        return VOID_MINIMAL_KERNEL_PTR;
+        return VOID_KERNEL_PTR;
     }
 
     self = (scow_Kernel*) calloc(1, sizeof(*self));
 
-    OCL_CHECK_EXISTENCE(self, VOID_MINIMAL_KERNEL_PTR);
+    OCL_CHECK_EXISTENCE(self, VOID_KERNEL_PTR);
 
     self->Destroy = Kernel_Destroy;
     self->Set_ND_Sizes = Kernel_Set_ND_Sizes;
@@ -541,7 +539,7 @@ scow_Kernel* Make_Kernel(scow_Steel_Thread* parent_steel_thread,
         {
             self->Destroy(self);
             error_message("Error while reading kernel source file.\n");
-            return VOID_MINIMAL_KERNEL_PTR;
+            return VOID_KERNEL_PTR;
         }
 
         break;
@@ -553,7 +551,7 @@ scow_Kernel* Make_Kernel(scow_Steel_Thread* parent_steel_thread,
 
     default:
         self->Destroy(self);
-        return VOID_MINIMAL_KERNEL_PTR;
+        return VOID_KERNEL_PTR;
         break;
     }
 
@@ -598,7 +596,7 @@ scow_Kernel* Make_Kernel(scow_Steel_Thread* parent_steel_thread,
         }
 
         self->Destroy(self);
-        return VOID_MINIMAL_KERNEL_PTR;
+        return VOID_KERNEL_PTR;
     }
 
     // Creating the kernel
@@ -614,7 +612,7 @@ scow_Kernel* Make_Kernel(scow_Steel_Thread* parent_steel_thread,
         }
 
         self->Destroy(self);
-        return VOID_MINIMAL_KERNEL_PTR;
+        return VOID_KERNEL_PTR;
     }
 
     if (how_to_get_sources == READ_FROM_FILES)
@@ -622,6 +620,7 @@ scow_Kernel* Make_Kernel(scow_Steel_Thread* parent_steel_thread,
         free(src_file);
     }
 
+    self->num_args = Get_Args_Num(self);
     return self;
 }
 

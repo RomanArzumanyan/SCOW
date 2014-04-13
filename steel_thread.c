@@ -164,6 +164,26 @@ static ret_code Steel_Thread_Wait_For_Cmd(scow_Steel_Thread* self)
 }
 
 /**
+* \related cl_Steel_Thread_t
+*
+* This function flushes Command Queue, in which kernels executions are
+* issued by default.
+*
+* @param[in,out] self pointer to structure of type 'cl_Steel_Thread_t', in which
+* function pointer 'FlushCmd' is defined to point on this function
+*
+* @return CL_SUCCESS in case of success, error code of type 'ret_code' in
+* case of error.
+*
+* @see cl_err_codes.h for detailed error description.
+* @see 'cl_Error_t' structure for error handling.
+*/
+static ret_code Steel_Thread_Flush_Cmd(scow_Steel_Thread* self)
+{
+    return clFlush(self->q_cmd);
+}
+
+/**
  * \related cl_Steel_Thread_t
  *
  * This function allocates memory for structure, initialize OpenCL & set
@@ -189,10 +209,11 @@ scow_Steel_Thread* Make_Steel_Thread(cl_device_id given_device)
     scow_Steel_Thread* self = (scow_Steel_Thread*) calloc(1, sizeof(*self));
     OCL_CHECK_EXISTENCE(self, VOID_STEEL_THREAD_PTR);
 
-    self->error = Make_Error();
-    self->Destroy = Steel_Thread_Destroy;
+    self->error             = Make_Error();
+    self->Destroy           = Steel_Thread_Destroy;
     self->Wait_For_Commands = Steel_Thread_Wait_For_Cmd;
-    self->Wait_For_Data = Steel_Thread_Wait_For_Data;
+    self->Wait_For_Data     = Steel_Thread_Wait_For_Data;
+    self->FlushCmd          = Steel_Thread_Flush_Cmd;
 
     // Get OpenCL Platform, to which OpenCL Device belongs to;
     cl_platform_id platform;

@@ -112,7 +112,10 @@ typedef struct scow_Steel_Thread
     /*!< Points on Steel_Thread_Wait_For_Commands(). */
 
     ret_code (*Wait_For_Data)(struct scow_Steel_Thread *self);
-/*!< Points on Steel_Thread_Wait_For_Data(). */
+    /*!< Points on Steel_Thread_Wait_For_Data(). */
+
+    ret_code(*FlushCmd)(struct scow_Steel_Thread* self);
+    /*!< Points on Steel_Thread_Flush_Cmd()*/
 /*!@}*/
 
 } scow_Steel_Thread;

@@ -271,9 +271,13 @@ static size_t Image_Get_Row_Pitch(scow_Mem_Object *self)
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static void* Buffer_Map(scow_Mem_Object *self, cl_bool blocking_map,
-        cl_map_flags map_flags, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static void* Buffer_Map(
+    scow_Mem_Object     *self, 
+    cl_bool             blocking_map,
+    cl_map_flags        map_flags, 
+    TIME_STUDY_MODE     time_mode,
+    cl_event            *evt_to_generate, 
+    cl_command_queue    explicit_queue)
 {
     cl_int ret;
 
@@ -288,8 +292,8 @@ static void* Buffer_Map(scow_Mem_Object *self, cl_bool blocking_map,
     }
 
     (evt_to_generate != NULL) ?
-            (p_mapping_ready = evt_to_generate) : (p_mapping_ready =
-                    &mapping_ready);
+            (p_mapping_ready = evt_to_generate) : 
+            (p_mapping_ready = &mapping_ready);
 
     // We can't map the object, that is already mapped
     if (self->mapped_to_region != NULL)
@@ -326,6 +330,10 @@ static void* Buffer_Map(scow_Mem_Object *self, cl_bool blocking_map,
         break;
     }
 
+    if (p_mapping_ready != evt_to_generate){
+        clReleaseEvent(*p_mapping_ready);
+    }
+
     return self->mapped_to_region;
 }
 
@@ -352,9 +360,13 @@ static void* Buffer_Map(scow_Mem_Object *self, cl_bool blocking_map,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static void* Image_Map(scow_Mem_Object *self, cl_bool blocking_map,
-        cl_map_flags map_flags, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static void* Image_Map(
+    scow_Mem_Object     *self, 
+    cl_bool             blocking_map,
+    cl_map_flags        map_flags, 
+    TIME_STUDY_MODE     time_mode,
+    cl_event            *evt_to_generate, 
+    cl_command_queue    explicit_queue)
 {
     cl_int ret;
 
@@ -411,6 +423,10 @@ static void* Image_Map(scow_Mem_Object *self, cl_bool blocking_map,
         break;
     }
 
+    if (p_mapping_ready != evt_to_generate){
+        clReleaseEvent(*p_mapping_ready);
+    }
+
     return self->mapped_to_region;
 }
 
@@ -433,9 +449,13 @@ static void* Image_Map(scow_Mem_Object *self, cl_bool blocking_map,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static ret_code Mem_Object_Unmap(scow_Mem_Object *self, cl_bool blocking_map,
-        void **p_mapped_ptr, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static ret_code Mem_Object_Unmap(
+    scow_Mem_Object         *self, 
+    cl_bool                 blocking_map,
+    void                    **p_mapped_ptr, 
+    TIME_STUDY_MODE         time_mode,
+    cl_event                *evt_to_generate, 
+    cl_command_queue        explicit_queue)
 {
     cl_int ret;
     cl_event *p_unmapping_ready;
@@ -498,6 +518,10 @@ static ret_code Mem_Object_Unmap(scow_Mem_Object *self, cl_bool blocking_map,
         break;
     }
 
+    if (p_unmapping_ready != evt_to_generate){
+        clReleaseEvent(*p_unmapping_ready);
+    }
+
     return ret;
 }
 
@@ -523,9 +547,13 @@ static ret_code Mem_Object_Unmap(scow_Mem_Object *self, cl_bool blocking_map,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static ret_code Buffer_Send_To_Device(scow_Mem_Object *self,
-        cl_bool blocking_flag, void *source, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static ret_code Buffer_Send_To_Device(
+    scow_Mem_Object         *self,
+    cl_bool                 blocking_flag, 
+    void                    *source, 
+    TIME_STUDY_MODE         time_mode,
+    cl_event                *evt_to_generate, 
+    cl_command_queue        explicit_queue)
 {
     cl_int ret = CL_SUCCESS;
     cl_event write_ready, *p_write_ready = (cl_event*) 0x0;
@@ -534,15 +562,15 @@ static ret_code Buffer_Send_To_Device(scow_Mem_Object *self,
     OCL_CHECK_EXISTENCE(source, INVALID_BUFFER_GIVEN);
 
     (evt_to_generate != NULL) ?
-            (p_write_ready = evt_to_generate) : (p_write_ready = &write_ready);
+            (p_write_ready = evt_to_generate) : 
+            (p_write_ready = &write_ready);
 
-    cl_command_queue q =
-            (explicit_queue == NULL) ?
-                    (self->parent_thread->q_data_htod) : (explicit_queue);
+    cl_command_queue q = (explicit_queue == NULL) ? 
+        (self->parent_thread->q_data_htod) : 
+        (explicit_queue);
 
     ret = clEnqueueWriteBuffer(q, self->cl_mem_object, blocking_flag, 0,
-            self->size, source, 0,
-            NULL, p_write_ready);
+            self->size, source, 0, NULL, p_write_ready);
 
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, ret);
 
@@ -558,6 +586,10 @@ static ret_code Buffer_Send_To_Device(scow_Mem_Object *self,
 
     default:
         break;
+    }
+
+    if (p_write_ready != evt_to_generate){
+        clReleaseEvent(*p_write_ready);
     }
 
     return ret;
@@ -584,9 +616,13 @@ static ret_code Buffer_Send_To_Device(scow_Mem_Object *self,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static ret_code Image_Send_To_Device(scow_Mem_Object *self,
-        cl_bool blocking_flag, void *source, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static ret_code Image_Send_To_Device(
+    scow_Mem_Object     *self,
+    cl_bool             blocking_flag, 
+    void                *source, 
+    TIME_STUDY_MODE     time_mode,
+    cl_event            *evt_to_generate, 
+    cl_command_queue    explicit_queue)
 {
     cl_int ret = CL_SUCCESS;
 
@@ -625,6 +661,10 @@ static ret_code Image_Send_To_Device(scow_Mem_Object *self,
         break;
     }
 
+    if (p_write_ready != evt_to_generate){
+        clReleaseEvent(*p_write_ready);
+    }
+
     return ret;
 }
 
@@ -649,9 +689,13 @@ static ret_code Image_Send_To_Device(scow_Mem_Object *self,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static ret_code Buffer_Get_From_Device(scow_Mem_Object *self,
-        cl_bool blocking_flag, void *destination, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static ret_code Buffer_Get_From_Device(
+    scow_Mem_Object     *self,
+    cl_bool             blocking_flag, 
+    void                *destination, 
+    TIME_STUDY_MODE     time_mode,
+    cl_event            *evt_to_generate, 
+    cl_command_queue    explicit_queue)
 {
     cl_int ret = CL_SUCCESS;
 
@@ -686,6 +730,10 @@ static ret_code Buffer_Get_From_Device(scow_Mem_Object *self,
         break;
     }
 
+    if (p_read_ready != evt_to_generate){
+        clReleaseEvent(*p_read_ready);
+    }
+
     return ret;
 }
 
@@ -710,9 +758,13 @@ static ret_code Buffer_Get_From_Device(scow_Mem_Object *self,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static ret_code Image_Get_From_Device(scow_Mem_Object *self,
-        cl_bool blocking_flag, void *destination, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static ret_code Image_Get_From_Device(
+    scow_Mem_Object         *self,
+    cl_bool                 blocking_flag, 
+    void                    *destination, 
+    TIME_STUDY_MODE         time_mode,
+    cl_event                *evt_to_generate, 
+    cl_command_queue        explicit_queue)
 {
     cl_int ret = CL_SUCCESS;
 
@@ -751,6 +803,10 @@ static ret_code Image_Get_From_Device(scow_Mem_Object *self,
         break;
     }
 
+    if (p_read_ready != evt_to_generate){
+        clReleaseEvent(*p_read_ready);
+    }
+
     return ret;
 }
 
@@ -774,9 +830,13 @@ static ret_code Image_Get_From_Device(scow_Mem_Object *self,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static ret_code Buffer_Copy(scow_Mem_Object *self, scow_Mem_Object *dest,
-        cl_bool blocking_flag, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static ret_code Buffer_Copy(
+    scow_Mem_Object         *self, 
+    scow_Mem_Object         *dest,
+    cl_bool                 blocking_flag, 
+    TIME_STUDY_MODE         time_mode,
+    cl_event                *evt_to_generate, 
+    cl_command_queue        explicit_queue)
 {
     cl_int ret = CL_SUCCESS;
 
@@ -828,6 +888,10 @@ static ret_code Buffer_Copy(scow_Mem_Object *self, scow_Mem_Object *dest,
         break;
     }
 
+    if (p_copy_ready != evt_to_generate){
+        clReleaseEvent(*p_copy_ready);
+    }
+
     return ret;
 }
 
@@ -850,9 +914,13 @@ static ret_code Buffer_Copy(scow_Mem_Object *self, scow_Mem_Object *dest,
  * @see cl_err_codes.h for detailed error description.
  * @see 'cl_Error_t' structure for error handling.
  */
-static ret_code Image_Copy(scow_Mem_Object *self, scow_Mem_Object *dest,
-        cl_bool blocking_flag, TIME_STUDY_MODE time_mode,
-        cl_event *evt_to_generate, cl_command_queue explicit_queue)
+static ret_code Image_Copy(
+    scow_Mem_Object         *self, 
+    scow_Mem_Object         *dest,
+    cl_bool                 blocking_flag, 
+    TIME_STUDY_MODE         time_mode,
+    cl_event                *evt_to_generate, 
+    cl_command_queue        explicit_queue)
 {
     cl_int ret = CL_SUCCESS;
 
@@ -910,6 +978,10 @@ static ret_code Image_Copy(scow_Mem_Object *self, scow_Mem_Object *dest,
 
     default:
         break;
+    }
+
+    if (p_copy_ready != evt_to_generate){
+        clReleaseEvent(*p_copy_ready);
     }
 
     return ret;
@@ -1052,7 +1124,7 @@ static scow_Mem_Object* Buffer_Make_Sub_Buffer(scow_Mem_Object *self,
     child->parent_thread = self->parent_thread;
 
     child->error = Make_Error();
-    child->timer = Make_Timer(VOID_MINIMAL_KERNEL_PTR);
+    child->timer = Make_Timer(VOID_KERNEL_PTR);
 
     child->Get_Mem_Obj = Mem_Object_Get_Mem_Obj;
     child->Destroy = Mem_Object_Destroy;
@@ -1123,7 +1195,7 @@ scow_Mem_Object* Make_Buffer(scow_Steel_Thread *parent_thread,
     self->parent_thread = parent_thread;
 
     self->error = Make_Error();
-    self->timer = Make_Timer(VOID_MINIMAL_KERNEL_PTR);
+    self->timer = Make_Timer(VOID_KERNEL_PTR);
 
     self->Get_Mem_Obj = Mem_Object_Get_Mem_Obj;
     self->Destroy = Mem_Object_Destroy;
@@ -1149,7 +1221,6 @@ scow_Mem_Object* Make_Buffer(scow_Steel_Thread *parent_thread,
     return self;
 }
 
-#ifdef CL_USE_DEPRECATED_OPENCL_1_1_APIS
 /**
  * \related cl_Mem_Object_t
  *
@@ -1171,9 +1242,14 @@ scow_Mem_Object* Make_Buffer(scow_Steel_Thread *parent_thread,
  * @warning always use 'Destroy' function pointer to free memory, allocated
  * by this function.
  */
-scow_Mem_Object* Make_Image(scow_Steel_Thread *parent_thread,
-        const cl_mem_flags mem_flags, const cl_image_format *image_format,
-        const size_t width, const size_t height, void *host_ptr)
+scow_Mem_Object* Make_Image(
+    scow_Steel_Thread       *parent_thread,
+    const cl_mem_flags      mem_flags, 
+    const cl_image_format   *image_format,
+    const size_t            width, 
+    const size_t            height, 
+    const size_t            row_pitch,
+    void                    *host_ptr)
 {
     cl_int ret;
     scow_Mem_Object* self;
@@ -1193,7 +1269,7 @@ scow_Mem_Object* Make_Image(scow_Steel_Thread *parent_thread,
     self->row_pitch = 0;
 
     self->error = Make_Error();
-    self->timer = Make_Timer(VOID_MINIMAL_KERNEL_PTR);
+    self->timer = Make_Timer(VOID_KERNEL_PTR);
 
     self->Get_Mem_Obj = Mem_Object_Get_Mem_Obj;
     self->Destroy = Mem_Object_Destroy;
@@ -1211,14 +1287,28 @@ scow_Mem_Object* Make_Image(scow_Steel_Thread *parent_thread,
     self->Get_Row_Pitch = Image_Get_Row_Pitch;
     self->Make_Child = NULL;
 
-
+#ifdef CL_USE_DEPRECATED_OPENCL_1_1_APIS
 	self->cl_mem_object = clCreateImage2D(self->parent_thread->context,
             mem_flags, image_format, self->width, self->height, self->row_pitch,
             host_ptr, &ret);
+#else
+    cl_image_desc image_desc = {
+        .image_type         = CL_MEM_OBJECT_IMAGE2D,
+        .image_width        = self->width,
+        .image_height       = self->height,
+        .image_array_size   = 1,
+        .image_row_pitch    = self->row_pitch,
+        .image_slice_pitch  = host_ptr ? (self->row_pitch * self->height) : 0,
+        .num_mip_levels     = 0,
+        .num_samples        = 0,
+        .buffer             = NULL
+    };
+    self->cl_mem_object = clCreateImage(self->parent_thread->context,
+        mem_flags, image_format, &image_desc, host_ptr, &ret);
+#endif
 
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, self->Destroy(self), VOID_MEM_OBJ_PTR);
 
     return self;
 }
-#endif
 

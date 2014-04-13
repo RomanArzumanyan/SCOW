@@ -209,6 +209,7 @@ scow_Mem_Object* Make_Buffer(struct scow_Steel_Thread *parent_thread,
  * @param[in] image_format OpenCL image format, that describe characteristics
  * @param[in] width image width
  * @param[in] height image height
+ * @param[in] row_pitch image row pitch (linesize in bytes)
  * @param[in] host_ptr pointer to Host-side memory region (if any). This argument
  * is optional. If not needed - provide null pointer instead.
  *
@@ -218,9 +219,14 @@ scow_Mem_Object* Make_Buffer(struct scow_Steel_Thread *parent_thread,
  * @warning always use 'Destroy' function pointer to free memory, allocated
  * by this function.
  */
-scow_Mem_Object* Make_Image(struct scow_Steel_Thread *parent_thread,
-        const cl_mem_flags mem_flags, const cl_image_format *image_format,
-        const size_t width, const size_t height, void* host_ptr);
+scow_Mem_Object* Make_Image(
+    struct scow_Steel_Thread    *parent_thread,
+    const cl_mem_flags          mem_flags,
+    const cl_image_format       *image_format,
+    const size_t                width, 
+    const size_t                height, 
+    const size_t                row_pitch,
+    void                        *host_ptr);
 
 #ifdef __cplusplus
 }

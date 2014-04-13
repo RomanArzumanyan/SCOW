@@ -25,11 +25,11 @@ extern "C"
 
 #include "timer.h"
 
-/*! \def VOID_MINIMAL_KERNEL_PTR
+/*! \def VOID_KERNEL_PTR
  * Void pointer to Kernel
  */
-#undef VOID_MINIMAL_KERNEL_PTR
-#define VOID_MINIMAL_KERNEL_PTR     ((scow_Kernel*)0x0)
+#undef VOID_KERNEL_PTR
+#define VOID_KERNEL_PTR     ((scow_Kernel*)0x0)
 
 /*! \def OCL_KERNEL_NAME_MAX_LEN
  * Maximal length of Kernel length string
@@ -132,6 +132,9 @@ typedef struct scow_Kernel
     size_t Dimensionality,
     /*!< Number of problem's dimensions. */
 
+    num_args,
+    /*!< Number of kernel arguments*/
+
     Global_Work_Size[3],
     /*!< Global amount of work items in each dimension. */
 
@@ -183,7 +186,7 @@ typedef struct scow_Kernel
  * building stage, if pre-built program isn't provided.
  *
  * @return pointer to allocated structure in case of success,
- * \ref VOID_MINIMAL_KERNEL_PTR otherwise
+ * \ref VOID_KERNEL_PTR otherwise
  *
  * @warning always use 'Destroy' function pointer to free memory, allocated by
  * this function.
