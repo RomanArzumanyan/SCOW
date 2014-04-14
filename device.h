@@ -237,6 +237,40 @@ typedef struct scow_Device
  */
 scow_Device* Make_Device(cl_device_id given_device);
 
+/**
+ * @brief This function make query about how many OpenCL SubSevices can be 
+ * retrieved by fission of given OpenCL Device.
+ *
+ * @param[in] given_device OpenCL Device to be fissioned.
+ * @param[in] properties Device fission properties.
+ * @param[out] ret operation return code.
+ *
+ * @return number of available SubDevices. In case of error set
+ * value of 'ret' variable to corresponding error code.
+ */
+cl_uint Get_MA_Subdevices_Num(
+    cl_device_id                        given_device,
+    const cl_device_partition_property  *properties,
+    ret_code                            *ret);
+
+/**
+ * @brief This function does fission on given OpenCL Device into
+ * SubDevices, allocates memory for them & return allocated array.
+ *
+ * @param[in] given_device given OpenCL Device to be fissioned.
+ * @param[in] properties Device fission properties.
+ * @param[in] num_devices desired SubDevices number.
+ * @param[out] ret operation return code.
+ *
+ * @return array of OpenCL SubDevices in case of success, \ref VOID_OPENCL_DEVICE_ID_PTR
+ * otherwise. In case of error, error code is returned in 'ret' variable.
+ */
+cl_device_id* Make_Subdevices(
+    cl_device_id                        given_device,
+    const cl_device_partition_property  *properties,
+    size_t                              num_devices,
+    ret_code                            *ret);
+
 #ifdef __cplusplus
 }
 #endif

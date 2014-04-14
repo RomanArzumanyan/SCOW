@@ -16,12 +16,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. */
 
-#include "device.h"
-#include "error.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "devices.h"
+#include "device.h"
+#include "error.h"
 
 /**
  * \related cl_Device
@@ -366,4 +367,43 @@ scow_Device* Make_Device(cl_device_id given_device)
 
     return self;
 }
-/*! \endcond */
+
+cl_uint Get_MA_Subdevices_Num(
+    cl_device_id                        given_device,
+    const cl_device_partition_property  *properties,
+    ret_code                            *ret)
+{
+    OCL_CHECK_EXISTENCE(given_device, ARG_NOT_FOUND);
+    OCL_CHECK_EXISTENCE(properties, ARG_NOT_FOUND);
+    OCL_CHECK_EXISTENCE(ret, ARG_NOT_FOUND);
+
+    cl_uint num_devices;
+
+    *ret = clCreateSubDevices(given_device, properties, 0, NULL, &num_devices);
+    OCL_DIE_ON_ERROR(*ret, CL_SUCCESS, NULL, 0);
+
+    return num_devices;
+}
+
+cl_device_id* Make_Subdevices(
+    cl_device_id                        given_device,
+    const cl_device_partition_property  *properties,
+    size_t                              num_devices,
+    ret_code                            *ret)
+{
+    OCL_CHECK_EXISTENCE(given_device, ARG_NOT_FOUND);
+    OCL_CHECK_EXISTENCE(properties, ARG_NOT_FOUND);
+    OCL_CHECK_EXISTENCE(ret, ARG_NOT_FOUND);
+
+    cl_device_id *sub_devices = (cl_device_id*)calloc(num_devices, sizeof(*sub_devices));
+    OCL_CHECK_EXISTENCE(sub_devices, VOID_OPENCL_DEVICE_ID_PTR);
+
+    *ret = clCreateSubDevices(given_device, properties, num_devices, 
+        sub_devices, NULL);
+
+    if (*ret != CL_SUCCESS){
+        free(sub_devices);
+    }
+
+    return sub_devices;
+}
