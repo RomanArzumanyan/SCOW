@@ -166,8 +166,8 @@ typedef struct scow_Kernel
     /*!< Points on Kernel_Check_Status. */
 
     ret_code (*Destroy)(struct scow_Kernel *p_self);
-/*!< Points on Kernel_Destroy(). */
-/*!@{*/
+    /*!< Points on Kernel_Destroy(). */
+    /*!@{*/
 
 } scow_Kernel;
 

@@ -29,3 +29,5 @@
 #include "steel_thread.h"
 #include "timer.h"
 #include "typedefs.h"
+#include "cmd_queue.h"
+#include "event.h"
