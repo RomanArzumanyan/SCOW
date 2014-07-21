@@ -233,6 +233,15 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
         OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_QUERY_DEVICE_PARAM);
     }
 
+    if (param == CL_DEVICE_MAX_MEM_ALLOC_SIZE || param == DEVICE_ALL_AVAILABLE)
+    {
+        ret |= clGetDeviceInfo(self->device_id,
+            CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong),
+            &self->max_alloc_mem_size, NULL);
+
+        OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_QUERY_DEVICE_PARAM);
+    }
+
     return CL_SUCCESS;
 }
 

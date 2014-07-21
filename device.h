@@ -196,7 +196,11 @@ typedef struct scow_Device
     native_vector_width_float;
     /*!< Native vector width for float. */
 
-    cl_ulong global_mem_size,
+    cl_ulong 
+    max_alloc_mem_size,
+    /*!< Maximal amount of memory, that can be allocated in bytes. */
+
+    global_mem_size,
     /*!< Size of global device memory in bytes. */
 
     global_mem_cache_size;

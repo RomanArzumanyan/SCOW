@@ -14,9 +14,10 @@ extern "C" {
      * \def Task
      * Pointer to Task function, which is interface to Command Queue.
      */
+    //TODO (r.arzumanyan): allocate structure with arguments on heap, pass pointer to this fptr, then use it in callback & free memory
     typedef ret_code(*Task)(
         struct scow_Command_Queue   *p_q,
-        ...);
+        void                        *args);
 
     /**
     * \def VOID_CMD_Q_PTR
