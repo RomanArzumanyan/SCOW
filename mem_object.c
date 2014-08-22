@@ -872,8 +872,7 @@ static ret_code Buffer_Copy(
                     (self->parent_thread->q_data_dtod) : (explicit_queue);
 
     ret = clEnqueueCopyBuffer(q, self->cl_mem_object, dest->cl_mem_object, 0, 0,
-            self->size, 0,
-            NULL, p_copy_ready);
+            self->size, 0, NULL, p_copy_ready);
 
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, ret);
 

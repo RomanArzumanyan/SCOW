@@ -202,10 +202,6 @@ static ret_code Steel_Thread_Flush_Cmd(scow_Steel_Thread* self)
  */
 scow_Steel_Thread* Make_Steel_Thread(cl_device_id given_device)
 {
-    int ret;
-    const cl_device_type device_type = CL_DEVICE_TYPE_GPU;
-    const char init_params[] = "";
-
     scow_Steel_Thread* self = (scow_Steel_Thread*) calloc(1, sizeof(*self));
     OCL_CHECK_EXISTENCE(self, VOID_STEEL_THREAD_PTR);
 
@@ -217,7 +213,7 @@ scow_Steel_Thread* Make_Steel_Thread(cl_device_id given_device)
 
     // Get OpenCL Platform, to which OpenCL Device belongs to;
     cl_platform_id platform;
-    ret = clGetDeviceInfo(given_device, CL_DEVICE_PLATFORM, sizeof(platform),
+    ret_code ret = clGetDeviceInfo(given_device, CL_DEVICE_PLATFORM, sizeof(platform),
         &platform, NULL);
     OCL_DIE_ON_ERROR(ret, CL_SUCCESS, self->Destroy(self), VOID_STEEL_THREAD_PTR);
 

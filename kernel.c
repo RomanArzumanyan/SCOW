@@ -102,7 +102,7 @@ static char* Read_Source_File(const char *filename)
         fclose(file);
         free(src);
 
-        return src;
+        return (char*)NULL;
     }
 
     src[size] = '\0'; /* NULL terminated */

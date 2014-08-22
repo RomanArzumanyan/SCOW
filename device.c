@@ -64,7 +64,7 @@ static ret_code Device_Destroy(scow_Device* self)
  */
 static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 {
-    ret_code ret;
+    ret_code ret = CL_SUCCESS;
     OCL_CHECK_EXISTENCE(self, INVALID_BUFFER_GIVEN);
 
     if (param == DEVICE_NAME || param == DEVICE_ALL_AVAILABLE)
@@ -77,7 +77,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_EXTENSIONS || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_EXTENSIONS, CL_DEVICE_EXTENSIONS_SIZE, self->extensions,
         NULL);
 
@@ -86,7 +86,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_VERSION || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_VERSION, CL_DEVICE_VERSION_SIZE, self->device_version,
         NULL);
 
@@ -95,7 +95,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DRIVER_VERSION || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DRIVER_VERSION, CL_DRIVER_VERSION_SIZE, self->driver_version,
         NULL);
 
@@ -104,7 +104,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_EXECUTION_CAPABILITIES || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id, CL_DEVICE_EXECUTION_CAPABILITIES,
+        ret = clGetDeviceInfo(self->device_id, CL_DEVICE_EXECUTION_CAPABILITIES,
                 sizeof(cl_device_exec_capabilities), &self->exec_capabilities,
                 NULL);
 
@@ -113,7 +113,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_MAX_COMPUTE_UNITS || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &self->max_compute_units,
         NULL);
 
@@ -122,7 +122,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_MEM_BASE_ADDR_ALIGN || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_MEM_BASE_ADDR_ALIGN, sizeof(cl_uint),
                 &self->mem_base_addr_align, NULL);
 
@@ -132,7 +132,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
     if (param == DEVICE_MIN_DATA_TYPE_ALIGN_SIZE
             || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, sizeof(cl_uint),
                 &self->min_data_type_align_size,
                 NULL);
@@ -142,7 +142,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_MAX_CLOCK_FREQUENCY || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint),
                 &self->max_clock_frequency, NULL);
 
@@ -152,7 +152,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
     if (param == DEVICE_GLOBAL_MEM_CACHELINE_SIZE
             || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(cl_uint),
                 &self->global_mem_cacheline_size,
                 NULL);
@@ -163,7 +163,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
     if (param == DEVICE_NATIVE_VECTOR_WIDTH_CHAR
             || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR, sizeof(cl_uint),
                 &self->native_vector_width_char,
                 NULL);
@@ -174,7 +174,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
     if (param == DEVICE_NATIVE_VECTOR_WIDTH_SHORT
             || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT, sizeof(cl_uint),
                 &self->native_vector_width_short,
                 NULL);
@@ -185,7 +185,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
     if (param == DEVICE_NATIVE_VECTOR_WIDTH_INT
             || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_NATIVE_VECTOR_WIDTH_INT, sizeof(cl_uint),
                 &self->native_vector_width_int,
                 NULL);
@@ -196,7 +196,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
     if (param == DEVICE_NATIVE_VECTOR_WIDTH_LONG
             || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG, sizeof(cl_uint),
                 &self->native_vector_width_long,
                 NULL);
@@ -207,7 +207,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
     if (param == DEVICE_NATIVE_VECTOR_WIDTH_FLOAT
             || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, sizeof(cl_uint),
                 &self->native_vector_width_float,
                 NULL);
@@ -217,7 +217,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_GLOBAL_MEM_SIZE || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &self->global_mem_size,
         NULL);
 
@@ -226,7 +226,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == DEVICE_GLOBAL_MEM_CACHE_SIZE || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
         CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(cl_ulong),
                 &self->global_mem_cache_size, NULL);
 
@@ -235,7 +235,7 @@ static ret_code Device_Gather_Info(scow_Device* self, DEVICE_INFO_PARAM param)
 
     if (param == CL_DEVICE_MAX_MEM_ALLOC_SIZE || param == DEVICE_ALL_AVAILABLE)
     {
-        ret |= clGetDeviceInfo(self->device_id,
+        ret = clGetDeviceInfo(self->device_id,
             CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong),
             &self->max_alloc_mem_size, NULL);
 
@@ -412,6 +412,7 @@ cl_device_id* Make_Subdevices(
 
     if (*ret != CL_SUCCESS){
         free(sub_devices);
+        return (cl_device_id*)NULL;
     }
 
     return sub_devices;
