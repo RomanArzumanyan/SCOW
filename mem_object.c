@@ -532,7 +532,7 @@ static ret_code Mem_Object_Unmap(
  * 'source' & write that data into OpenCL buffer memory object, defined by
  * argument 'self'
  *
- * @param[in,out] self  pointer to structure, in which 'Send_To_Device' function pointer
+ * @param[in,out] self  pointer to structure, in which 'Write' function pointer
  * is defined to point on this function.
  * @param[in] blocking_flag flag, that denotes, should operation be blocking or not.
  * @param[in] source pointer to Host-accessible memory region, that
@@ -601,7 +601,7 @@ static ret_code Buffer_Send_To_Device(
  * This function read data from Host-accessible memory region, defined by argument
  * 'source' & write that data into OpenCL Image memory object, definded by
  * argument'self'
- * @param[in,out] self  pointer to structure, in which 'Send_To_Device' function pointer
+ * @param[in,out] self  pointer to structure, in which 'Write' function pointer
  * is defined to point on this function.
  * @param[in] blocking_flag flag, that denotes, should operation be blocking or not.
  * @param[in] source pointer to Host-accessible memory region, that
@@ -674,7 +674,7 @@ static ret_code Image_Send_To_Device(
  * This function reads OpenCL buffer memory object & write that data into
  * Host-accessible memory region.
  *
- * @param[in,out] self  pointer to structure, in which 'Get_From_Device' function pointer
+ * @param[in,out] self  pointer to structure, in which 'Read' function pointer
  * is defined to point on this function.
  * @param[in] blocking_flag flag, that denotes, should operation be blocking or not.
  * @param[out] destination pointer to Host-accessible memory region, where
@@ -743,7 +743,7 @@ static ret_code Buffer_Get_From_Device(
  * This function reads OpenCL Image memory object & write that data into
  * Host-accessible memory region.
  *
- * @param[in,out] self  pointer to structure, in which 'Get_From_Device' function pointer
+ * @param[in,out] self  pointer to structure, in which 'Read' function pointer
  * is defined to point on this function.
  * @param[in] blocking_flag flag, that denotes, should operation be blocking or not.
  * @param[out] destination pointer to Host-accessible memory region, where
@@ -815,7 +815,7 @@ static ret_code Image_Get_From_Device(
  *
  * This function copies content of one OpenCL buffer memory object into another.
  *
- * @param[in,out] self  pointer to structure, in which 'Get_From_Device' function pointer
+ * @param[in,out] self  pointer to structure, in which 'Copy' function pointer
  * is defined to point on this function.
  * @param[out] dest pointer to another Memory Object structure, where the data
  * from 'self' will be copied to.
@@ -898,7 +898,7 @@ static ret_code Buffer_Copy(
  * \related cl_Mem_Object_t
  *
  * This function copy content of one OpenCL Image memory object into another.
- * @param[in,out] self  pointer to structure, in which 'Get_From_Device' function pointer
+ * @param[in,out] self  pointer to structure, in which 'Copy' function pointer
  * is defined to point on this function.
  * @param[out] dest pointer to another Memory Object structure, where the data
  * from 'self' will be copied to.
@@ -992,7 +992,7 @@ static ret_code Image_Copy(
  * This function swaps pointers to OpenCL memory objects. It can be used in
  * some cases as quicker alternative to copy.
  *
- * @param[in,out] self  pointer to structure, in which 'Get_From_Device' function pointer
+ * @param[in,out] self  pointer to structure, in which 'Swap' function pointer
  * is defined to point on this function.
  * @param[in,out] dest pointer to structure with which memory objects will be
  * swapped
@@ -1068,6 +1068,35 @@ static ret_code Buffer_Erase(scow_Mem_Object *self)
     return ret;
 }
 
+static ret_code Mem_Object_Sync(
+    scow_Mem_Object     *self,
+    MEM_OBJECT_ETHALON  ethalon,
+    TIME_STUDY_MODE     time_mode)
+{
+    ret_code ret = CL_SUCCESS;
+    OCL_CHECK_EXISTENCE(self, INVALID_BUFFER_GIVEN);
+
+    if (!(self->mem_flags & CL_MEM_USE_HOST_PTR)){
+        return INVALID_BUFFER_GIVEN;
+    }
+
+    switch (ethalon){
+    case DEVICE:
+        self->Read(self, CL_FALSE, self->host_ptr, time_mode, (cl_event*)0, (cl_command_queue)0);
+        break;
+
+    case HOST:
+        self->Write(self, CL_FALSE, self->host_ptr, time_mode, (cl_event)0, (cl_command_queue)0);
+        break;
+
+    default:
+        ret = INVALID_ARG_TYPE;
+        break;
+    }
+
+    return ret;
+}
+
 /**
  * \related cl_Mem_Object_t
  *
@@ -1131,10 +1160,11 @@ static scow_Mem_Object* Buffer_Make_Sub_Buffer(scow_Mem_Object *self,
     child->Unmap = Mem_Object_Unmap;
 
     child->Map = Buffer_Map;
-    child->Send_To_Device = Buffer_Send_To_Device;
-    child->Get_From_Device = Buffer_Get_From_Device;
+    child->Write = Buffer_Send_To_Device;
+    child->Read = Buffer_Get_From_Device;
     child->Copy = Buffer_Copy;
     child->Erase = Buffer_Erase;
+    child->Sync = Mem_Object_Sync;
 
     child->Get_Height = Buffer_Get_Height;
     child->Get_Width = Buffer_Get_Width;
@@ -1202,10 +1232,11 @@ scow_Mem_Object* Make_Buffer(scow_Steel_Thread *parent_thread,
     self->Unmap = Mem_Object_Unmap;
 
     self->Map = Buffer_Map;
-    self->Send_To_Device = Buffer_Send_To_Device;
-    self->Get_From_Device = Buffer_Get_From_Device;
+    self->Write = Buffer_Send_To_Device;
+    self->Read = Buffer_Get_From_Device;
     self->Copy = Buffer_Copy;
     self->Erase = Buffer_Erase;
+    self->Sync = Mem_Object_Sync;
 
     self->Get_Height = Buffer_Get_Height;
     self->Get_Width = Buffer_Get_Width;
@@ -1276,10 +1307,11 @@ scow_Mem_Object* Make_Image(
     self->Unmap = Mem_Object_Unmap;
 
     self->Map = Image_Map;
-    self->Send_To_Device = Image_Send_To_Device;
-    self->Get_From_Device = Image_Get_From_Device;
+    self->Write = Image_Send_To_Device;
+    self->Read = Image_Get_From_Device;
     self->Copy = Image_Copy;
     self->Erase = NULL;
+    self->Sync = Mem_Object_Sync;
 
     self->Get_Height = Image_Get_Height;
     self->Get_Width = Image_Get_Width;

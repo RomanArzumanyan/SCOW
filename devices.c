@@ -142,7 +142,7 @@ ret_code Collect_Devices_List(void)
 	}
 
 	if (g_all_GPU_num){
-		g_all_GPU_list = (cl_device_id*)calloc(g_all_CPU_num, sizeof(*g_all_GPU_list));
+		g_all_GPU_list = (cl_device_id*)calloc(g_all_GPU_num, sizeof(*g_all_GPU_list));
 	}
 
 	if (g_all_CPU_num + g_all_GPU_num == 0){

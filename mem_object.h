@@ -50,6 +50,15 @@ typedef enum MEM_OBJECT_TYPE
     IMAGE
 } MEM_OBJECT_TYPE;
 
+typedef enum MEM_OBJECT_ETHALON
+{
+    /*! Indicates that OpenCL Host has ethalon information about shared memory object*/
+    HOST = 0,
+
+    /*! Indicates that OpenCL Device has ethalon information about shared memory object*/
+    DEVICE
+} MEM_OBJECT_ETHALON;
+
 /*!
  * \struct scow_Mem_Object
  *
@@ -146,12 +155,12 @@ typedef struct scow_Mem_Object
             cl_event* evt_to_generate, cl_command_queue explicit_queue);
     /*!< Points on Buffer_Unmap() or Image_Unmap(). */
 
-    ret_code (*Send_To_Device)(struct scow_Mem_Object *self,
+    ret_code (*Write)(struct scow_Mem_Object *self,
             cl_bool blocking_flag, void* source, TIME_STUDY_MODE time_mode,
             cl_event* evt_to_generate, cl_command_queue explicit_queue);
     /*!< Points on Buffer_Send_To_Device() or Image_Send_To_Device(). */
 
-    ret_code (*Get_From_Device)(struct scow_Mem_Object *self,
+    ret_code (*Read)(struct scow_Mem_Object *self,
             cl_bool blocking_flag, void* destination, TIME_STUDY_MODE time_mode,
             cl_event* evt_to_generate, cl_command_queue explicit_queue);
     /*!< Points on Buffer_Get_From_Device() or Image_Get_From_Device(). */
@@ -167,6 +176,10 @@ typedef struct scow_Mem_Object
 
     ret_code (*Erase)(struct scow_Mem_Object* self);
     /*!< Points on Buffer_Erase() of Image_Erase(). */
+
+    ret_code(*Sync)(struct scow_Mem_Object* self, MEM_OBJECT_ETHALON ethalon,
+        TIME_STUDY_MODE time_mode);
+    /*!< Points on Mem_Object_Sync(). */
 
     struct scow_Mem_Object* (*Make_Child)(struct scow_Mem_Object *self,
             cl_mem_flags flags, cl_buffer_create_type buffer_create_type,
