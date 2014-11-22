@@ -111,6 +111,15 @@ cl_device_id Pick_Next_Device(const cl_device_id current_device);
 */
 cl_device_id Pick_Prev_Device(const cl_device_id current_device);
 
+/**
+* @brief This function prints names of all OpenCL Devices of given type.
+*
+* @param[in] dev_type type of wanted OpenCL Device
+*
+* @return CL_SUCCESS in case of success, error code otherwise
+*/
+ret_code List_All_Devices(cl_device_type dev_type);
+
 #ifdef __cplusplus
 }
 #endif

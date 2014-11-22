@@ -17,11 +17,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "err_codes.h"
 #include "error.h"
 #include "platforms.h"
 #include "devices.h"
+#include "device.h"
 
 cl_device_id *g_all_CPU_list = VOID_OPENCL_DEVICE_ID_PTR;
 cl_device_id *g_all_GPU_list = VOID_OPENCL_DEVICE_ID_PTR;
@@ -54,12 +56,14 @@ static size_t Get_Num_Devices(
 		OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, ret);
 	}
 
-	// At current moment only CPU & GPU are supported.
+	// Only CPU & GPU are supported.
 	switch (wanted_device_type){
 	case CL_DEVICE_TYPE_CPU:
 		ret = clGetDeviceIDs(parent_platform, CL_DEVICE_TYPE_CPU, 0,
 			NULL, &current_platform_device_num);
-		OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, 0);
+        if (ret != CL_SUCCESS){
+            current_platform_device_num = 0;
+        }
 		g_all_CPU_num += current_platform_device_num;
 
 		break;
@@ -67,14 +71,16 @@ static size_t Get_Num_Devices(
 	case CL_DEVICE_TYPE_GPU:
 		ret = clGetDeviceIDs(parent_platform, CL_DEVICE_TYPE_GPU, 0,
 			NULL, &current_platform_device_num);
-		OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, 0);
+        if (ret != CL_SUCCESS){
+            current_platform_device_num = 0;
+        }
 		g_all_GPU_num += current_platform_device_num;
 
 		break;
 
 	default:
-		ret = VALUE_OUT_OF_RANGE;
-		OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, ret);
+        ocl_error_message(VALUE_OUT_OF_RANGE);
+        current_platform_device_num = 0;
 		break;
 	}
 
@@ -394,4 +400,36 @@ cl_device_id Pick_Prev_Device(const cl_device_id current_device)
         (&current_device > devices) && (&current_device < devices + num_devices);
 
     return good_device ? *(&current_device - 1) : NULL;
+}
+
+ret_code List_All_Devices(cl_device_type dev_type)
+{
+    cl_device_id *devices = NULL;
+    size_t num_devices = 0;
+    if (dev_type == CL_DEVICE_TYPE_CPU){
+        devices = g_all_CPU_list;
+        num_devices = g_all_CPU_num;
+    }
+    else if (dev_type == CL_DEVICE_TYPE_GPU){
+        devices = g_all_GPU_list;
+        num_devices = g_all_GPU_num;
+    }
+    else{
+        return VALUE_OUT_OF_RANGE;
+    }
+
+    if (!devices || !num_devices){
+        return CANT_FIND_DEVICE;
+    }
+
+    for (size_t i = 0; i < num_devices; i++){
+        char name[CL_DEVICE_NAME_SIZE];
+        ret_code ret = CL_SUCCESS;
+
+        ret = clGetDeviceInfo(devices[i],
+            CL_DEVICE_NAME, CL_DEVICE_NAME_SIZE, name, NULL);
+        OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, CANT_QUERY_DEVICE_PARAM);
+
+        printf("%s\n", name);
+    }
 }
