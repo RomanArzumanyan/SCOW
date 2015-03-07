@@ -85,6 +85,7 @@ cl_platform_id Pick_Platform_By_Name(const char* platform_name)
 		OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
 
 		char *name = (char*)calloc(name_len, sizeof(*name));
+        OCL_CHECK_EXISTENCE(name, NULL);
 
 		ret = clGetPlatformInfo(g_all_platforms_list[platform],
 			CL_PLATFORM_NAME, name_len, name, NULL);
@@ -108,12 +109,12 @@ cl_platform_id Pick_Platform_By_Name(const char* platform_name)
 
 cl_platform_id Pick_First_Platform(void)
 {
-	return g_all_platforms_list ? NULL : g_all_platforms_list[0];
+	return g_all_platforms_list ? g_all_platforms_list[0] : NULL;
 }
 
 cl_platform_id Pick_Last_Platform(void)
 {
-	return g_all_platforms_list ? NULL : g_all_platforms_list[g_num_platforms];
+    return g_all_platforms_list ? g_all_platforms_list[g_num_platforms] : NULL;
 }
 
 cl_platform_id Pick_Next_Platform(cl_platform_id current_platform)

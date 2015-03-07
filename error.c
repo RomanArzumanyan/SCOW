@@ -112,6 +112,7 @@ static const char* Error_Get_Error_Message(const scow_Error* self)
 
     char* error_message = (char*) calloc(ERR_MSG_MAX_LEN,
             sizeof(*error_message));
+    OCL_CHECK_EXISTENCE(error_message, error_message);
 
     switch (self->Get_Last_Code(self))
     {

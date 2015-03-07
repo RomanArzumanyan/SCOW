@@ -79,6 +79,9 @@ typedef struct scow_Kernel_Arg
 
 } scow_Kernel_Arg;
 
+#define K_ARG(A) \
+    { sizeof(A), (void*)&(A) }
+
 /*! Callback, that can be called on particular OpenCL event status. */
 typedef void (*OpenCL_Callback)(cl_event event,
         cl_int event_command_exec_status, void* user_data);

@@ -243,6 +243,7 @@ cl_device_id Pick_Device_By_Name(const char* const device_name)
 			OCL_DIE_ON_ERROR(ret, CL_SUCCESS, NULL, NULL);
 
 			char *name = (char*)calloc(name_len, sizeof(*name));
+            OCL_CHECK_EXISTENCE(name, BUFFER_NOT_ALLOCATED);
 
             ret = clGetDeviceInfo(devices[device],
                 CL_DEVICE_NAME, name_len, name, NULL);
