@@ -1,0 +1,14 @@
+#Add source files
+set(SCOW_SOURCE
+  ${CMAKE_CURRENT_SOURCE_DIR}/device.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/devices.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/error.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/mem_object.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/platform.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/platforms.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/setup_teardown.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/steel_thread.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/timer.c
+  PARENT_SCOPE
+)
